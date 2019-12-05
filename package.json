@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Eafy/react-native-baidu-map-jm.git"
+    "url": "git+https://github.com/JimiPlatform/react-native-baidu-map-jm.git"
   },
   "keywords": [
     "Baidu Map",
@@ -17,9 +17,9 @@
   "author": "Eafy",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Eafy/react-native-baidu-map-jm/issues"
+    "url": "https://github.com/JimiPlatform/react-native-baidu-map-jm/issues"
   },
-  "homepage": "https://github.com/Eafy/react-native-baidu-map-jm#readme",
+  "homepage": "https://github.com/JimiPlatform/react-native-baidu-map-jm#readme",
   "devDependencies": {
     "react": "16.6.3",
     "react-native": "^0.57.5"
