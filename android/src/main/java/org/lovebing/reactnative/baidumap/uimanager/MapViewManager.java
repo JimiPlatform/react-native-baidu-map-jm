@@ -102,6 +102,7 @@ public class MapViewManager extends ViewGroupManager<MapView> {
     public void removeAllViews(MapView parent) {
         super.removeAllViews(parent);
 
+        Log.d("RNBaidudu", "MapViewManager removeAllViews");
         MapListener mMapListener = mapListenerMap.get(parent);
         if (mMapListener != null) {
             BaiduMap map = parent.getMap();
@@ -111,14 +112,16 @@ public class MapViewManager extends ViewGroupManager<MapView> {
             map.setOnMapDoubleClickListener(null);
             map.setOnMarkerClickListener(null);
 
-            mapListenerMap.remove(mMapListener);
             mMapListener.onDestroy();
+            mapListenerMap.remove(parent);
+            mMapListener = null;
         }
 
         ArrayList<Object> childrenList = mapViewMap.get(parent);
         if (childrenList != null) {
             removeOldChildViews(parent.getMap(), childrenList);
             mapViewMap.remove(parent);
+            Log.d("RNBaidudu", "Remove all view");
         }
     }
 
