@@ -223,7 +223,7 @@ export default class App1 extends Component<Props> {
                         title={this.state.markers[0].title}
                         location={this.state.markers[0].location}
                         icon={require('./res/image/icon_car.png')}
-                        rotate={90}
+                        rotate={20}
                     />
 
                     <Overlay.Marker
