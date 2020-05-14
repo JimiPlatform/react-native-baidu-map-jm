@@ -36,8 +36,9 @@ NS_ASSUME_NONNULL_BEGIN
 
  @param mapView 百度地图
  @param points 坐标数组
+ @param fLevel 当前地图缩放等级
  */
-+ (void)setVisualRange:(BaiduMapView *)mapView pointArray:(NSArray *)points;
++ (void)setVisualRange:(BaiduMapView *)mapView pointArray:(NSArray *)points fLevel:(float)fLevel;
 
 @end
 

@@ -272,7 +272,8 @@
 - (void)setVisualRange:(NSArray *)tracePoints
 {
     if (tracePoints.count > 0) {
-        [TrackUtils setVisualRange:self pointArray:tracePoints];
+        BMKMapStatus *status = [self getMapStatus];
+        [TrackUtils setVisualRange:self pointArray:tracePoints fLevel:status.fLevel];
     }
 }
 
