@@ -35,7 +35,7 @@
     if (!image || (num == radians && num % 360 == 0)) {
         return image;
     }
-    double radius = radians * M_PI / 180 + M_PI;
+    double radius = -radians * M_PI / 180;
 
     CGSize rotatedSize = image.size;
     UIGraphicsBeginImageContextWithOptions(rotatedSize, false, [UIScreen mainScreen].scale);

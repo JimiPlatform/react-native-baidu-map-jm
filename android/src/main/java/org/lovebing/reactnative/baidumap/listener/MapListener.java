@@ -45,6 +45,7 @@ public class MapListener implements BaiduMap.OnMapStatusChangeListener,
 
     public void onDestroy() {
         mapView = null;
+        reactContext = null;
     }
 
     @Override

@@ -61,7 +61,7 @@ public class OverlayMarkerManager extends SimpleViewManager<OverlayMarker> {
 
     @ReactProp(name = "rotate")
     public void setRotate(OverlayMarker overlayMarker, float rotate) {
-        overlayMarker.setRotate(rotate);
+        overlayMarker.setRotate(-rotate);
     }
 
     @ReactProp(name = "flat")

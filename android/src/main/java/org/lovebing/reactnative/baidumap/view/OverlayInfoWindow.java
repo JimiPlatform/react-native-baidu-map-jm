@@ -72,9 +72,11 @@ public class OverlayInfoWindow extends ReactViewGroup implements OverlayView {
         super(context);
         mContext = context;
 
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction("com.jimi.rn.kJMBaiduInfoWindowUpdateLocation");
-        mContext.registerReceiver(mBroadcastReceiver, intentFilter);
+        try {
+            IntentFilter intentFilter = new IntentFilter();
+            intentFilter.addAction("com.jimi.rn.kJMBaiduInfoWindowUpdateLocation");
+            mContext.registerReceiver(mBroadcastReceiver, intentFilter);
+        } catch (Exception e) {}
     }
 
     @Override
@@ -90,12 +92,11 @@ public class OverlayInfoWindow extends ReactViewGroup implements OverlayView {
                 updateThread = null;
             }
 
-            try {
-                if (mContext != null && mBroadcastReceiver != null) {
+            if (mContext != null && mBroadcastReceiver != null) {
+                try {
                     mContext.unregisterReceiver(mBroadcastReceiver);
                     mBroadcastReceiver = null;
-                }
-            } catch (Exception e) {
+                } catch (Exception e) {}
             }
 
             hide();
