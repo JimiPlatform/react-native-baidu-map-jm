@@ -202,7 +202,7 @@ public class MapViewManager extends ViewGroupManager<MapView> {
 
         List<LatLng> mPoints = LatLngUtil.fromReadableArray(data);
         //mPoints = TrackUtils.gpsConversionBaidu(tracks);
-        TrackUtils.setAllinVisibleRange(mapView.getMap(),mPoints);
+        TrackUtils.setAllinVisibleRange(mapView,mPoints);
         Log.i("MapView","更新了轨迹点：" + mPoints.size());
     }
 

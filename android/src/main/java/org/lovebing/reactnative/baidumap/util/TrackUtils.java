@@ -2,11 +2,14 @@ package org.lovebing.reactnative.baidumap.util;
 
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
+import android.graphics.Point;
 
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
+import com.baidu.mapapi.map.MapView;
 import com.baidu.mapapi.map.PolylineOptions;
+import com.baidu.mapapi.map.Projection;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.model.LatLngBounds;
 import com.baidu.mapapi.utils.CoordinateConverter;
@@ -18,16 +21,17 @@ import java.util.List;
 public class TrackUtils {
     //private BaiduMap baiduMap;
     //private List<LatLng> mPoints = new ArrayList<>(); //轨迹点集合
-   // private List<LatLng> mTracks; //轨迹点详情
+    // private List<LatLng> mTracks; //轨迹点详情
 
     /**
-     *  原始gps坐标集转换百度坐标集
+     * 原始gps坐标集转换百度坐标集
+     *
      * @param tracks 从服务器获取的GPS信息列表
      * @return 百度坐标点集合
      */
-    public static List<LatLng> gpsConversionBaidu(List<LatLng> tracks){
+    public static List<LatLng> gpsConversionBaidu(List<LatLng> tracks) {
         List<LatLng> points = new ArrayList<>();
-        for(LatLng latLng : tracks){
+        for (LatLng latLng : tracks) {
             points.add(gpsConversionBaidu(latLng));
         }
         return points;
@@ -35,10 +39,11 @@ public class TrackUtils {
 
     /**
      * 将设备采集到的GPS坐标转成百度坐标
+     *
      * @param pLatLng 坐标对象
      * @return 百度坐标
      */
-    public static LatLng gpsConversionBaidu(LatLng pLatLng){
+    public static LatLng gpsConversionBaidu(LatLng pLatLng) {
         // 将GPS设备采集的原始GPS坐标转换成百度坐标
         CoordinateConverter converter = new CoordinateConverter();
         converter.from(CoordinateConverter.CoordType.GPS);
@@ -51,31 +56,40 @@ public class TrackUtils {
     /**
      * 全部点的轨迹
      */
-    public void drawAllTracks(BaiduMap baiduMap ,List<LatLng> points ,int lineColor){
+    public void drawAllTracks(BaiduMap baiduMap, List<LatLng> points, int lineColor) {
         PolylineOptions ooPolyline = new PolylineOptions().width(8).color(lineColor).points(points);
 
     }
 
     /**
      * 调整所有设备位置到屏幕可见范围内
+     *
      * @param points
      * @param pMap
      */
-    public static void setAllinVisibleRange(BaiduMap pMap, List<LatLng> points){
-        if(points.size() == 0)
+    public static void setAllinVisibleRange(MapView pMap, List<LatLng> points) {
+        if (points.size() == 0)
             return;
-        if (points.size() == 1){
-            if (points.get(0) != null){
+        if (points.size() == 1) {
+            if (points.get(0) != null) {
                 //设置图片中心点
                 //MapStatusUpdate mapStatusUpdate = MapStatusUpdateFactory.newLatLng(points.get(0));
                 //设置图片中心点和图片的放缩级别
-                MapStatusUpdate mapStatusUpdate = MapStatusUpdateFactory.newLatLngZoom(points.get(0), pMap.getMaxZoomLevel() - 3);
-                pMap.animateMapStatus(mapStatusUpdate);
+                  /*MapStatusUpdate mapStatusUpdate = MapStatusUpdateFactory.newLatLngZoom(points.get(0), pMap.getMaxZoomLevel() - 3);
+                pMap.animateMapStatus(mapStatusUpdate);*/
+
+                Projection projection = pMap.getMap().getProjection();
+                if (projection != null) {
+                    Point vPoint = projection.toScreenLocation(points.get(0));
+                    if (isOutScreen(pMap, vPoint)) {
+                        pMap.getMap().animateMapStatus(MapStatusUpdateFactory.newLatLng(points.get(0)));
+                    }
+                }
             }
             return;
         }
         LatLng latMax = null, latMin = null, lngMax = null, lngMin = null;
-        for (int i = 0; i < points.size(); i++){
+        for (int i = 0; i < points.size(); i++) {
             LatLng vMyLatLng = points.get(i);
             if (latMax == null) {
                 latMax = vMyLatLng;
@@ -95,16 +109,16 @@ public class TrackUtils {
         //地理范围数据结构，由西南以及东北坐标点确认
         LatLngBounds latLngBounds = new LatLngBounds.Builder().include(northeast).include(southwest).build();
         MapStatusUpdate mapStatusUpdate = MapStatusUpdateFactory.newLatLngBounds(latLngBounds);
-        pMap.animateMapStatus(mapStatusUpdate);
+        pMap.getMap().animateMapStatus(mapStatusUpdate);
     }
 
     /**
      * 通过坐标集合计算总里程
      */
-    public static double getTotalDistance(List<LatLng> points){
+    public static double getTotalDistance(List<LatLng> points) {
         double vDistance = 0;
-        for (int i = 0; i < points.size(); i++){
-            if (i > 0){
+        for (int i = 0; i < points.size(); i++) {
+            if (i > 0) {
                 LatLng vMylatlng1 = points.get(i - 1);
                 LatLng vMylatlng2 = points.get(i);
                 vDistance += getDistance(vMylatlng1, vMylatlng2);
@@ -116,8 +130,10 @@ public class TrackUtils {
 
     private static double DEF_PI180 = 0.01745329252; // PI/180.0
     private static double DEF_R = 6370693.5; // radius of earth
+
     /**
      * 计算两点之间距离
+     *
      * @param start
      * @param end
      * @return 米
@@ -144,7 +160,7 @@ public class TrackUtils {
 
     }
 
-    public  static Bitmap zoomImg(Bitmap bm, int newWidth, int newHeight) {
+    public static Bitmap zoomImg(Bitmap bm, int newWidth, int newHeight) {
         //获得图片的宽高
         int width = bm.getWidth();
         int height = bm.getHeight();
@@ -190,4 +206,18 @@ public class TrackUtils {
         return list;
     }
     //https://www.jianshu.com/p/fc1123fcc10d
+
+    /**
+     * 车辆s是否显示在MapView中
+     *
+     * @param pPoint
+     * @return
+     */
+    public static boolean isOutScreen(MapView mapView, Point pPoint) {
+        if (pPoint.x < 0 || pPoint.y < 0 || pPoint.x > mapView.getWidth() || pPoint.y > mapView
+                .getHeight()) {
+            return true;
+        }
+        return false;
+    }
 }
