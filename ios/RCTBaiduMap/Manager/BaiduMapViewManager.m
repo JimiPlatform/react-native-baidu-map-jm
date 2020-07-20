@@ -94,7 +94,10 @@ RCT_CUSTOM_VIEW_PROPERTY(correctPerspective, NSDictionary, BaiduMapView) {  //æ›
 
 -(void)mapView:(BMKMapView *)mapView didSelectAnnotationView:(BMKAnnotationView *)view
 {
+    [view setSelected:false animated:true];
     NSString *title = [[view annotation] title];
+    JMMarkerAnnotation *jmAnnotation = (JMMarkerAnnotation *)view.annotation;
+    NSInteger tag = jmAnnotation.markerView.tag;
     if (!title) {
         title = @"";
     }
@@ -102,6 +105,7 @@ RCT_CUSTOM_VIEW_PROPERTY(correctPerspective, NSDictionary, BaiduMapView) {  //æ›
                             @"type": @"onMarkerClick",
                             @"params": @{
                                     @"title": title,
+                                    @"tag":@(tag),
                                     @"position": @{
                                             @"latitude": @([[view annotation] coordinate].latitude),
                                             @"longitude": @([[view annotation] coordinate].longitude)
@@ -123,9 +127,35 @@ RCT_CUSTOM_VIEW_PROPERTY(correctPerspective, NSDictionary, BaiduMapView) {  //æ›
                             };
     [self sendEvent:(BaiduMapView *)mapView params:event];
 }
-
+- (void)sendMarkerEventWithmMapView:(BMKMapView *)mapView marker:(OverlayMarker *)markerView{
+    NSString *title = markerView.title;
+    CLLocationCoordinate2D coordinate = markerView.location;
+    NSInteger tag = markerView.tag;
+    if (!title) {
+        title = @"";
+    }
+    NSDictionary* event = @{
+                            @"type": @"onMarkerClick",
+                            @"params": @{
+                                    @"title": title,
+                                    @"tag":@(tag),
+                                    @"position": @{
+                                            @"latitude": @(coordinate.latitude),
+                                            @"longitude": @(coordinate.longitude)
+                                            }
+                                    }
+                            };
+    [self sendEvent:(BaiduMapView *)mapView params:event];
+}
 - (BMKAnnotationView *)mapView:(BMKMapView *)mapView viewForAnnotation:(id <BMKAnnotation>)annotation {
     JMMarkerAnnotation *jmAnnotation = (JMMarkerAnnotation *)annotation;
+//    if (jmAnnotation.markerView) {
+//        UIImage *image = jmAnnotation.markerView.image;
+//        NSLog(@"jmAnnotation.markerView = %d",jmAnnotation.markerView.tag);
+//        return jmAnnotation.markerView;
+//    }
+//    NSLog(@"jmAnnotation.markerView nil ");
+//    return nil;
     JMPinAnnotationView *annotationView = (JMPinAnnotationView *)[mapView dequeueReusableAnnotationViewWithIdentifier:@"JMMarkerJMPinAnnotation"];
     if (!annotationView) {
         annotationView = [[JMPinAnnotationView alloc] initWithAnnotation:jmAnnotation reuseIdentifier:@"JMMarkerJMPinAnnotation"];
@@ -134,13 +164,24 @@ RCT_CUSTOM_VIEW_PROPERTY(correctPerspective, NSDictionary, BaiduMapView) {  //æ›
     }
     //        annotationView.pinColor = BMKPinAnnotationColorPurple;
     //        annotationView.animatesDrop = YES;
+//    UIView *view = jmAnnotation.markerView;
+//    view.frame = CGRectMake(-10, -10, 20, 20);
+//    view.backgroundColor = [UIColor redColor];
+//    [annotationView addSubview:view];
+
     annotationView.hidePaopaoWhenSingleTapOnMap = NO;
     annotationView.hidePaopaoWhenDoubleTapOnMap = NO;
     annotationView.hidePaopaoWhenTwoFingersTapOnMap = NO;
     annotationView.hidePaopaoWhenSelectOthers = NO;
     annotationView.hidePaopaoWhenDragOthers = NO;
     annotationView.hidePaopaoWhenDrag = NO;
-
+    annotationView.annotation = annotation;
+    if (annotationView.paopaoView.tag != PAOPAOVIEW_TAG_NOEMPTY) {
+        BMKActionPaopaoView *pView = [[BMKActionPaopaoView alloc] initWithCustomView:[[UIView alloc] init]];
+        pView.backgroundColor = [UIColor clearColor];
+        annotationView.paopaoView = pView;
+        annotationView.paopaoView.tag = PAOPAOVIEW_TAG_EMPTY;
+    }
     return annotationView;
 }
 

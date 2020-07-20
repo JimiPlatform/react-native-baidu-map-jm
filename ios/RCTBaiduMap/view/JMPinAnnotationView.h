@@ -11,9 +11,8 @@
 #import "JMMarkerAnnotation.h"
 
 NS_ASSUME_NONNULL_BEGIN
-
+typedef void (^SelectAnnotationBlock)(OverlayMarker *markerView);
 @interface JMPinAnnotationView : BMKAnnotationView
-
 - (void)updateIcon:(JMMarkerAnnotation *)annotation;
 
 @end

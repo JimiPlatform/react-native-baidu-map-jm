@@ -14,12 +14,13 @@
 #import <BaiduMapAPI_Map/BMKPolylineView.h>
 #import "JMPinAnnotationView.h"
 #import "OverlayInfoWindow.h"
-
+#include "OverlayMarker.h"
+#include "UIView+React.h"
 @interface BaiduMapView()
 
 @property (nonatomic, strong) NSMutableArray *annotationArray;
 @property (nonatomic, strong) OverlayInfoWindow *overlayInfoWindow;
-
+@property (nonatomic, strong) NSMutableDictionary<NSNumber *,JMMarkerAnnotation *> * annotationDic;
 @end
 
 @implementation BaiduMapView
@@ -47,10 +48,13 @@
             self.overlayInfoWindow = (OverlayInfoWindow *)view;
             [self updateInfoWindows];
         }
-    } else {
+    } else if([view isKindOfClass:[OverlayMarker class]]){
+//        [self addMarkerView:(OverlayMarker *)view];
+    }  else {
         [super addSubview:view];
     }
 }
+
 
 - (void)willRemoveSubview:(UIView *)subview
 {
@@ -91,14 +95,22 @@
 
 #pragma mark - Marker
 
-- (void)setMarkers:(NSArray *)markers
-{
+- (void)setMarkers:(NSArray *)markers{
+    BOOL isRun = true;
+    for (NSUInteger i = 0; i < markers.count; ++i) {
+        NSDictionary *option = [markers objectAtIndex:i];
+
+        BOOL isIteration =  [RCTConvert BOOL:option[@"isIteration"]];
+        if (isIteration) {//如果是之前的代码还是用这个方法
+            isRun = false;
+        }
+    }
     NSInteger markersCount = [markers count];
     if (_annotationArray == nil) {
         _annotationArray = [[NSMutableArray alloc] init];
     }
 
-    if (markers != nil) {
+    if (markers != nil && isRun) {
         for (NSInteger i = 0, markersMax = markersCount; i < markersMax; i++)  {
             NSDictionary *option = [markers objectAtIndex:i];
             
@@ -106,7 +118,6 @@
             if (i < [_annotationArray count]) {
                 annotation = [self.annotationArray objectAtIndex:i];
             }
-            NSLog(@"Marker%ld:%@", (long)i, option);
 
             if (![RCTConvert BOOL:option[@"visible"]]) {  //隐藏则移除此Marker;
                 markersCount --;
@@ -133,6 +144,8 @@
         }
 
         [self updateInfoWindows];
+    }else if(markers != nil){
+        [self updateAnnotationWithMartker:markers];
     }
 }
 
@@ -165,6 +178,7 @@
 
 - (void)updateAnnotationView:(JMPinAnnotationView *)annotationView annotation:(JMMarkerAnnotation *)annotation dataDic:(NSDictionary *)dataDic
 {
+
     if (!annotation) return;
 
     CLLocationCoordinate2D coor = annotation.coordinate;
@@ -176,29 +190,37 @@
     NSDictionary *iconDic = annotation.iconDic;
 
     if (dataDic) {
+
         tag = [RCTConvert int:dataDic[@"tag"]];
         title = [RCTConvert NSString:dataDic[@"title"]];
         alpha = [RCTConvert float:dataDic[@"alpha"]];
         flat = [RCTConvert BOOL:dataDic[@"flat"]];
         coor = [self getCoorFromMarkerOption:dataDic];
         rotate = [RCTConvert float:dataDic[@"rotate"]];
-
         iconDic = dataDic[@"icon"];
+//        iconUrl = [RCTConvert NSString:dataDic[@"icon"]];
+//        iconDic = dataDic[@"icon"];
     }
-
     if (annotationView) {
-        if ([annotation isDifIcon:iconDic] || (!annotationView.image && iconDic) || !dataDic) {
+        if ([annotation isDifIcon:iconDic] || ( !annotationView.image && (annotationView.image != annotation.iconImage) && iconDic) || !dataDic) {
             annotation.iconDic = iconDic;
+//            if ([iconDic isKindOfClass:[NSString class]]) {
+//  
             annotation.iconImage = [annotation getImage];
+         
             annotationView.image = annotation.iconImage;
             annotation.rotate = 0;
         }
+//        else if (iconUrl){
+//            annotation.iconImage = [UIImage imageWithContentsOfFile:(NSString *)iconDic];
+//            annotationView.image = annotation.iconImage;
+//            annotation.rotate = 0;
+//        }
 
         if (annotation.rotate != rotate) {
             annotation.rotate = rotate;
             annotationView.image = [JMMarkerAnnotation imageRotated:annotation.iconImage radians:annotation.rotate];
         }
-
         if (tag >= 0 && annotation.tag != tag) {
             annotation.tag = tag;
             [self updateInfoWindows];
@@ -206,10 +228,9 @@
             [self updateInfoWindows];
         }
     }
-
     annotation.tag = tag;
     annotation.coordinate = coor;
-    annotation.title = title;
+    annotation.title = title ? title : @" ";
     annotation.flat = flat;
     annotation.iconDic = iconDic;
     annotation.rotate = rotate;
@@ -226,13 +247,14 @@
     for (JMMarkerAnnotation *annotation in array) {
         BMKPinAnnotationView *annotationView = (BMKPinAnnotationView *)[self viewForAnnotation:annotation];
         if (annotation.tag == self.overlayInfoWindow.tag && !self.overlayInfoWindow.visible) {
-            if (annotationView && !annotationView.paopaoView) {
+            if (annotationView && (!annotationView.paopaoView || annotationView.paopaoView.tag == PAOPAOVIEW_TAG_EMPTY)) {
                 [annotation clear];     //清除数据
 
                 dispatch_async(dispatch_get_main_queue(), ^{
                     BMKActionPaopaoView *pView = [[BMKActionPaopaoView alloc] initWithCustomView:self.overlayInfoWindow];
                     pView.backgroundColor = [UIColor clearColor];
                     annotationView.paopaoView = pView;
+                    annotationView.paopaoView.tag = PAOPAOVIEW_TAG_NOEMPTY;
                     [self selectAnnotation:annotation animated:YES];
                 });
             }
@@ -277,4 +299,167 @@
     }
 }
 
+#pragma mark ---
+- (void)addMarkerView:(OverlayMarker *)markerView{
+    if (!markerView || !markerView.isIteration) {//如果是之前代码测不管
+        return;
+    }
+    JMMarkerAnnotation *annotation = nil;
+    NSNumber *number = [NSNumber numberWithInteger:markerView.tag];
+    if (!markerView.visible ) {
+        if ([self.annotationDic.allKeys containsObject:number] ) {
+             annotation = self.annotationDic[number];
+             [self removeAnnotation:annotation];
+             [self updateAnnotation:annotation markerView:markerView];
+//             [self addAnnotation:annotation];
+             self.annotationDic[number] = annotation;
+        }else{
+            annotation = [[JMMarkerAnnotation alloc] init];
+            [self updateAnnotation:annotation markerView:markerView];
+//            [self addAnnotation:annotation];
+            self.annotationDic[number] = annotation;
+        }
+//        if ([self.annotationDic.allKeys containsObject:number]) {
+//            annotation = self.annotationDic[number];
+//            [annotation clear];
+//            [self removeAnnotation:annotation];
+//            [self.annotationDic removeObjectForKey:number];
+//        }
+        
+    } else if ([self.annotationDic.allKeys containsObject:number]) {
+        annotation = self.annotationDic[number];
+        [self removeAnnotation:annotation];
+        [self updateAnnotation:annotation markerView:markerView];
+        [self addAnnotation:annotation];
+        self.annotationDic[number] = annotation;
+    }else{
+        annotation = [[JMMarkerAnnotation alloc] init];
+        [self updateAnnotation:annotation markerView:markerView];
+        [self addAnnotation:annotation];
+        self.annotationDic[number] = annotation;
+    }
+//    annotation.tag = (int)markerView.tag;
+//    annotation.title = markerView.title;
+//    annotation.flat = markerView.flat;
+//    annotation.iconDic = markerView.icon;
+//    annotation.alpha = markerView.alpha;
+//    annotation.rotate = markerView.rotate;
+//    annotation.coordinate = markerView.location;
+//    annotation.iconImage = [annotation getImage];
+//    JMPinAnnotationView *annotationView = (JMPinAnnotationView *)[self viewForAnnotation:annotation];
+//    annotationView.image = annotation.iconImage;
+//    UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 20, 20)];
+//    view.backgroundColor = [UIColor blueColor];
+//    [annotationView addSubview:view];
+////    UIImage *image = annotation.iconImage;
+////    markerView.image = image;
+////    annotation.markerView = markerView;
+//    NSLog(@"markerView.icon == %@ annotationView.image = %@",markerView.icon,annotationView.image);
+    
+}
+- (void)updateAnnotation:(JMMarkerAnnotation *)annotation markerView:(OverlayMarker *)markerView
+{
+
+    if (!annotation) return;
+    JMPinAnnotationView *annotationView = (JMPinAnnotationView *)[self viewForAnnotation:annotation];
+
+    CLLocationCoordinate2D coor = annotation.coordinate;
+    NSString *title = annotation.title;
+    float alpha = annotation.alpha;
+    BOOL flat =  annotation.flat;
+    float rotate = annotation.rotate;
+    int tag = annotation.tag;
+    NSDictionary *iconDic = annotation.iconDic;
+
+    if (markerView) {
+        tag = (int)markerView.tag;
+        title = markerView.title;
+        alpha = markerView.alpha;
+        flat = markerView.flat;
+        coor = markerView.location;
+        rotate = markerView.rotate;
+        iconDic = markerView.icon;
+    }
+
+    if (annotationView) {
+        if ([annotation isDifIcon:iconDic] || (!annotationView.image && iconDic) || !markerView) {
+            annotation.iconDic = iconDic;
+//            if ([iconDic isKindOfClass:[NSString class]]) {
+//                annotation.iconImage = [UIImage imageWithContentsOfFile:(NSString *)iconDic];
+//            }else{
+//            }
+            annotation.iconImage = [annotation getImage];
+         
+            annotationView.image = annotation.iconImage;
+            annotation.rotate = 0;
+        }
+
+        if (annotation.rotate != rotate) {
+            annotation.rotate = rotate;
+            annotationView.image = [JMMarkerAnnotation imageRotated:annotation.iconImage radians:annotation.rotate];
+        }
+        if (tag >= 0 && annotation.tag != tag) {
+            annotation.tag = tag;
+            [self updateInfoWindows];
+        } else if (tag >= 0 && annotation.tag == tag && annotationView.paopaoView == nil) {
+            [self updateInfoWindows];
+        }
+    }
+    annotation.tag = tag;
+    annotation.coordinate = coor;
+    annotation.title = title ? title : @" ";
+    annotation.flat = flat;
+    annotation.iconDic = iconDic;
+    annotation.rotate = rotate;
+//    if (markerView.width && markerView.height) {
+        annotation.markerView = markerView;
+//    }
+    
+}
+- (void)updateAnnotationWithMartker:(NSArray *)markers{
+    for (NSDictionary *option in markers) {
+        int tag = [RCTConvert int:option[@"tag"]];
+        NSNumber *number = [NSNumber numberWithInteger:tag];
+        if ([self.annotationDic.allKeys containsObject:number]) {
+            JMMarkerAnnotation *annotation = self.annotationDic[number];
+            
+            JMPinAnnotationView *annotationView = (JMPinAnnotationView *)[self viewForAnnotation:annotation];
+            [self updateAnnotationView:annotationView annotation:annotation dataDic:option];
+            [self removeAnnotation:annotation];
+            if ([RCTConvert BOOL:option[@"visible"]]) {
+//                NSLog(@"[self addAnnotation:annotation]; tag = %ld",annotation.markerView.tag);
+                [self addAnnotation:annotation];
+            }else{
+//                NSLog(@"[self removeAnnotation:annotation]; tag = %ld",annotation.markerView.tag);
+                [self removeAnnotation:annotation];
+            }
+            self.annotationDic[number] = annotation;
+        }
+    }
+}
+- (void)insertReactSubview:(UIView *)subview atIndex:(NSInteger)atIndex{
+    if([subview isKindOfClass:[OverlayMarker class]]){
+        [self addMarkerView:(OverlayMarker *)subview];
+    }
+    [super insertReactSubview:subview atIndex:atIndex];
+}
+- (void)removeReactSubview:(UIView *)subview{
+    if([subview isKindOfClass:[OverlayMarker class]]){
+        OverlayMarker *markerView = (OverlayMarker *)subview;
+        NSNumber *number = [NSNumber numberWithInteger:markerView.tag];
+        if ([self.annotationDic.allKeys containsObject:number]) {
+            JMMarkerAnnotation *annotation = self.annotationDic[number];
+            [annotation clear];
+            [self removeAnnotation:annotation];
+            [self.annotationDic removeObjectForKey:number];
+        }
+    }
+    [super removeReactSubview:subview];
+}
+- (NSMutableDictionary<NSNumber *,JMMarkerAnnotation *> *)annotationDic{
+    if (!_annotationDic) {
+        _annotationDic = [[NSMutableDictionary alloc] init];
+    }
+    return _annotationDic;
+}
 @end

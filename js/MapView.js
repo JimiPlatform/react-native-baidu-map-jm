@@ -69,37 +69,71 @@ export default class MapView extends Component {
   }
 
   renderIOS() {
+    let number = 0;
     const children = this.props.children ? this.props.children : [];
     const markerMap = {};
     for (let i = 0; i < children.length; i++) {
       for (let p in children[i]) {
         if (children[i].type === Marker) {
           const props = children[i].props;
-          const icon = resolveAssetSource(props.icon) || {};
-          markerMap[props.location.latitude + ":" + props.location.longitude + ":" + props.icon] = {
+          let icon = resolveAssetSource(props.icon) || {};
+          if (typeof(props.icon) === 'string') {
+            icon = props.icon
+          }
+          markerMap[props.location.latitude + ":" + props.location.longitude + ":" + props.icon+i] = {
             tag: props.tag,
             title: props.title,
             latitude: props.location.latitude,
             longitude: props.location.longitude,
+            isIteration:props.isIteration,
             alpha: props.alpha,
             icon: icon,
             rotate: props.rotate,
             flat: props.flat,
             visible: props.visible
           };
+        } else if (Array.isArray(children[i])){
+          let childrenArr = children[i];
+          for (let index = 0; index < childrenArr.length; index++) {
+            const element = childrenArr[index];
+            if (element.type === Marker) {
+              const props = element.props;
+              let icon = resolveAssetSource(props.icon) || {};
+              if (typeof(props.icon) === 'string') {
+                icon = props.icon
+              }
+              markerMap[props.location.latitude + ":" + props.location.longitude + ":" + props.icon+index] = {
+                tag: props.tag,
+                title: props.title,
+                latitude: props.location.latitude,
+                longitude: props.location.longitude,
+                isIteration:props.isIteration,
+                alpha: props.alpha,
+                icon: icon,
+                rotate: props.rotate,
+                flat: props.flat,
+                visible: props.visible
+              };
+            }
+          }
         }
       }
+      number = 0;
     }
     const markers = [];
     for (let p in markerMap) {
       markers.push(markerMap[p]);
     }
+    
+    // console.log("+++markers = ",markers)
+    // console.log("this.props.children = ",children)
     return <BaiduMapView {...this.props} markers={markers} onChange={this._onChange.bind(this)}
             ref={(component) => this.mapViewRef = component}
            />;
   }
 
   renderAndroid() {
+
     return <BaiduMapView {...this.props} onChange={this._onChange.bind(this)}
             ref={(component) => this.mapViewRef = component}
           />;

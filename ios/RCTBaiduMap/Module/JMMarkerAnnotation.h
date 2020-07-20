@@ -8,7 +8,7 @@
 
 #import <BaiduMapAPI_Map/BMKPointAnnotation.h>
 #import <UIKit/UIKit.h>
-
+#include "OverlayMarker.h"
 NS_ASSUME_NONNULL_BEGIN
 
 @interface JMMarkerAnnotation : BMKPointAnnotation
@@ -18,7 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) float alpha;
 @property (nonatomic, assign) float rotate;
 @property (nonatomic, assign) BOOL flat;
-
+@property (nonatomic, strong) OverlayMarker *markerView;
 @property (nonatomic, strong) UIImage *iconImage;
 
 - (UIImage *)getImage;

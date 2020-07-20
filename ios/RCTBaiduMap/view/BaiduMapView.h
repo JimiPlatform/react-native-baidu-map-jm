@@ -20,6 +20,11 @@
 #import "JMMarkerAnnotation.h"
 #import "JMPinAnnotationView.h"
 
+#define PAOPAOVIEW_TAG_EMPTY 1437898
+
+#define PAOPAOVIEW_TAG_NOEMPTY 1437896
+
+
 @interface BaiduMapView : BMKMapView <BMKMapViewDelegate>
 
 @property (nonatomic,copy) RCTBubblingEventBlock onChange;

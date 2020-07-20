@@ -12,6 +12,7 @@
 @interface JMPinAnnotationView()
 
 @property (nonatomic,strong) UIImageView *imageView;
+@property (nonatomic,strong) UIView *backgroundView;
 
 @end
 
@@ -22,17 +23,26 @@
     self = [super initWithAnnotation:annotation reuseIdentifier:reuseIdentifier];
     if ([annotation isKindOfClass:[JMMarkerAnnotation class]]) {
         JMMarkerAnnotation *annotation1 = (JMMarkerAnnotation *)annotation;
+        self.frame = CGRectMake(0, 0, 30, 30);
         [self updateIcon:annotation1];
     }
-
+  
     return self;
 }
-
+- (UIView *)backgroundView{
+    if (!_backgroundView) {
+        _backgroundView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 30, 30)];
+//        _backgroundView.userInteractionEnabled = true;
+        [self addSubview:_backgroundView];
+    }
+    return _backgroundView;
+}
 - (UIImageView *)imageView
 {
     if (_imageView == nil) {
-        _imageView = [[UIImageView alloc] initWithFrame:CGRectMake(-10, -10, 30, 30)];
+        _imageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 30, 30)];
         _imageView.contentMode = UIViewContentModeCenter;
+        _imageView.userInteractionEnabled = true;
         [self addSubview:_imageView];
     }
 
@@ -43,7 +53,8 @@
 {
     NSInteger width = image.size.width;
     NSInteger height = image.size.height;
-    CGRect frame = CGRectMake(-width/2.0, -height/2.0, width, height);
+    CGRect frame = CGRectMake(0, 0, width, height);
+    self.frame = CGRectMake(0, 0, width, height);
     self.imageView.frame = frame;
     self.imageView.image = image;
 }
@@ -71,6 +82,20 @@
     } else {
         self.image = nil;
     }
+    if (annotation1.markerView != nil) {
+        for (UIView *view in self.backgroundView.subviews) {
+            if ([view isKindOfClass:[OverlayMarker class]]) {
+                NSArray<UIGestureRecognizer *> *taps = [view gestureRecognizers];
+                for (UIGestureRecognizer *gest in taps) {
+                    [view removeGestureRecognizer:gest];
+                }
+            }
+//            [view removeFromSuperview];
+        }
+        [self.backgroundView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+        OverlayMarker *markerView = annotation1.markerView;
+        [self.backgroundView addSubview:markerView];
+        markerView.frame = CGRectMake(0, 0, 30, 30);
+    }
 }
-
 @end

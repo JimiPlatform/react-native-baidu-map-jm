@@ -14,7 +14,7 @@
 #import <BaiduMapAPI_Map/BMKAnnotationView.h>
 #import <BaiduMapAPI_Map/BMKAnnotation.h>
 #import <UIKit/UIKit.h>
-
+#import "UIView+React.h"
 #ifndef OverlayMarker_h
 #define OverlayMarker_h
 
@@ -24,10 +24,12 @@
 @property (nonatomic, strong) id icon;
 @property (nonatomic, assign) float alpha;
 @property (nonatomic, assign) float rotate;
+@property (nonatomic, assign) float width;
+@property (nonatomic, assign) float height;
 @property (nonatomic, assign) BOOL flat;
+@property (nonatomic, assign) BOOL isIteration;
 @property (nonatomic, assign) CLLocationCoordinate2D location;
 @property (nonatomic, assign) BOOL visible;
-
 @end
 
 #endif
