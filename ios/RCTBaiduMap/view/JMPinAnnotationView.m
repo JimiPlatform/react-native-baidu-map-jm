@@ -54,8 +54,8 @@
     NSInteger width = image.size.width;
     NSInteger height = image.size.height;
     CGRect frame = CGRectMake(0, 0, width, height);
-    self.frame = CGRectMake(0, 0, width, height);
-    self.imageView.frame = frame;
+    CGRect rect = self.frame;
+    self.frame = CGRectMake(rect.origin.x, rect.origin.y, width, height);    self.imageView.frame = frame;
     self.imageView.image = image;
 }
 
