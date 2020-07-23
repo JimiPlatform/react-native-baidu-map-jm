@@ -29,7 +29,7 @@ export default class Marker extends Component {
     rotate: PropTypes.number,
     isIteration:PropTypes.bool,
     flat: PropTypes.bool,
-    icon: PropTypes.oneOfType[PropTypes.string, PropTypes.number],
+    icon: PropTypes.number,
     visible: PropTypes.bool,
     tag: PropTypes.number
   };
@@ -40,7 +40,6 @@ export default class Marker extends Component {
     isIteration:false,
     width: 0,
     height:0,
-    icon:{},
     location: {
       latitude: 0,
       longitude: 0
