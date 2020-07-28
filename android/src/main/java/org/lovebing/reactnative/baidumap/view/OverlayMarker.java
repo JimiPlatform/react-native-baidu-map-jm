@@ -275,12 +275,13 @@ public class OverlayMarker extends ReactViewGroup implements OverlayView {
 
     private void addOverlay(BaiduMap baiduMap) {
         Log.d("RNBaidudu", "Marker is addOverlay:" + getTag());
-        BitmapDescriptor icon;
+        BitmapDescriptor icon = null;
         if (getIconBitmapDescriptor() != null) {
             icon = getIconBitmapDescriptor();
-        } else {
+        }  else {
             icon = BitmapDescriptorFactory.fromResource(R.mipmap.icon_gcoding);
         }
+        if (icon==null)return;
 
         MarkerOptions option = new MarkerOptions()
                 .position(position)
